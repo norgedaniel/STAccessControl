@@ -1,0 +1,13 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/ConsoleApp/obj
+/STCA_ServiceLayer/obj
+/STCA_ServiceLayer/bin/Debug/net6.0
+/STCA_DataLayer/obj
+/STCA_DataLayer/bin/Debug/net6.0
+/STCA_App/obj
+/STCA_App/bin/Debug/net6.0
+/ConsoleApp/bin/Debug/net6.0
+/.vs

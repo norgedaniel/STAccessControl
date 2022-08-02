@@ -1,0 +1,9 @@
+- Implement and link the view for my HomeController in order to show the TiposAreasAcceso list,
+allowing the user to sort and pagine the records and to make some filters.
+
+- Update the use of EF Core to Async programming.
+
+- Deep into the use of Dependency Injection as method parameter injection and register classes with DI as service 
+using interface. Get to know when this aproach is more necessary.
+
+- Comment into the Readme file the knowledge gained so far.
