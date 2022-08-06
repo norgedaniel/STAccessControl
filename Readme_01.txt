@@ -207,7 +207,7 @@ Next:
 In ASP.NET Core, middleware are C# classes or functions that handle an HTTP request or response. 
 They are chained together, with the output of one middleware acting as the input to the next middleware, to form a pipeline.
 
-Understanding how to build and compose middleware is key to adding functionality to your applications.
+Understanding how to build and compose middleware is key to adding functionality to our applications.
 
 Middleware can:
 - Handle an incoming HTTP request by generating an HTTP response.
@@ -215,7 +215,7 @@ Middleware can:
 - Process an outgoing HTTP response, modify it, and pass it on to either another piece of middleware or the ASP.NET Core web server.
 
 The most important piece of middleware in most ASP.NET Core applications is the EndpointMiddleware class. 
-This class normally generates all your HTML pages and API responses (for Web API applications).
+This class normally generates all our HTML pages and API responses (for Web API applications).
 
 
 ----------------------------------------------------------------------------
@@ -361,20 +361,272 @@ IMPORTANT:
    Example: return RedirectToPage("./Index");
  - OnGet() could return void or IActionResult; whereas OnPost() usually returns IActionResult in order to invoke to render
    the page or to redirect to another page.
- - If we’re returning more than one type of result from a page handler, we’ll need to ensure your method returns an IActionResult.
+ - If we’re returning more than one type of result from a page handler, we’ll need to ensure our method returns an IActionResult.
 
 
 ----------------------------------------------------------------------------
 Returning responses with ActionResults.
 
+There are different types to return as ActionResults. The most used are:
+ - PageResult for ask Razor page to render the correspond HTML.
+ - ViewResult, the same for MVC approach App. 
+ - NotFoundResult to send a raw 404 HTTP status code.
+ - ContentResult to send some string as response. Useful for Web API App, to send JSON.
+ - RedirectToPageResult to send a 302 HTTP redirect and instruct the client browser to go to another URL.
+ - RedirectResult: the same as RedirectToPageResult, but the URL does not to be a Razor page.
+
+
+----------------------------------------------------------------------------
+Routing.
+
+Routing in ASP.NET Core is the process of mapping an incoming HTTP request to a specific handler. 
+In Razor Pages, the handler is a page handler method in a Razor Page. In MVC, the handler is an action method in a controller.
+
+With Routing instead of take the query string to build a dynamic model binding, it decouples the URL into the Razor page to be call and the parameters to be filled:
+
+Example of using classic query string approach: products?name=simple-widget    -->  select products.cshtml  and parameter: name="simple-widget"
+
+Example of using Routing decoupling:  products/simple-widget  -->   select products.cshtml  and parameter:  {name}="simple-widget" 
+
+
+There are two types or routing available in ASP.NET Core: "convention-based routing" and "attribute routing".
+
+There are two middlewares to take care of routing: EndpointMiddleware  and  EndpointRoutingMiddleware
+
+  - EndpointMiddleware: registers the endpoint into the routing configuration.
+
+  - EndpointRoutingMiddleware: chooses which of the endpoints registered by the EndpointMiddleware should execute for a given request at runtime.
+
+An endpoint in ASP.NET Core is some handler that returns a response. Each endpoint is associated with a URL pattern.
+
+Razor Page handlers and MVC controller action methods typically make up the bulk of the endpoints in an application.
+
+We can automatically register all the Razor Pages in our application using extensions such as MapRazorPages().
+
+Additionally, we can register other endpoints explicitly using methods such as MapGet().
+
+This some example to configure and set the Routing in an App:
+
+// from Startup class
+public void Configure(IApplicationBuilder app)
+{
+	// add the routing middleware to the pipeline
+	app.UseRouting();
+
+	// set some endpoints into the routing middleware providing some lambda configuration.
+	app.UseEndpoints(endpoints =>
+    {
+		endpoints.MapRazorPages();				// setting automatically all our Razor pages.
+		endpoints.MapHealthChecks("/healthz");	// set some health-check endpoint.
+	}
+
+	// Register an endpoint inline that returns “Hello World!” at the route /test.
+	endpoints.MapGet("/test", async context =>
+	{
+		await context.Response.WriteAsync("Hello World!");
+	}
+}
+
+Each endpoint is associated with a route template that defines which URLs the endpoint should match. 
+
+A route template is a URL pattern that is used to match against request URLs. They’re strings of fixed values, like "/test" in the previous listing. 
+They can also contain placeholders for variables.
+
+The process:
+
+When App starts, the EndpointMiddleware stores the registered routes and the corresponding endpoints in a dictionary. Examples:
+
+	Route template						Razor page
+	----------------------				-------------------------
+	start-checkout						/Checkout/Start.cshtml
+	Privacy								/Privacy.cshtml
+	Index								/Index.cshtml
+
+Then when a request arrives, the routing middleware checks it againts the route templates in order to find a Razor page to fill the request.
+
+If some Razor page is found, the routing middleware records its name into the request HTTPContext. The next middleware can view which endpoint has been selected.
+
+Finally the endpoint middleware executes the selected razor page. If there is no page to cover the request, the Dummy middleware runs and return the raw 404 code.
+
+There is some important issue here: Middlewares placed before the Routing middleware will never know about the selected endpoint to attend the request. 
+Conversely middlewares after the Routing middleware do will know it. Because of this, it´s important to put the AuthorizationMiddleware between the RoutingMiddleware
+and the EndpointMiddleware. This is because the AuthorizationMiddleware could be to check about some required permissions the user could have in order to access
+the razor page.
+
+------------------------------------------------------------------------------
+Convention-based routing vs. attribute routing.
+
+Which approach we use will typically depend on whether we’re using Razor Pages or MVC controllers, and whether we’re building an API or a website (using HTML).
+
+Convention-based routing is defined globally for our application and it´s most for App using MVC controllers to generate HTML. 
+The downside is this approach makes more difficult the customizing some URL for a subset of controllers and actions. This is, the customizing is more hard to do it.
+
+Throught the attribute-based routes allows more flexibility, as we can explicitly define what the URL for each action method should be. 
+This method requires to place [Route] attributes on the action methods themselves. 
+Despite this, the additional flexibility it provides can be very useful, especially when building Web APIs.
+
+There is a third method, mixing these two methods and it is most usefull for Razor page projects.
+
+Route templates define the structure of known URLs in our application. They’re strings with placeholders for variables that can contain optional values.
+
+A single route template can match many different URLs. For example, the /customer/1 and /customer/2 URLs would both be matched by the "customer/{id}".
+
+The route template syntax is powerful and contains many different features that are controlled by splitting a URL into multiple segments.
+
+A segment is a small contiguous section of a URL. It’s separated from other URL segments by at least one character, often by the / character.
+
+Routing involves matching the segments of a URL to a route template.
+
+For each route template, we can define:
+- Specific, expected strings
+- Variable segments of the URL
+- Optional segments of a URL
+- Default values when an optional segment isn’t provided
+- Constraints on segments of a URL, such as ensuring that it’s numeric
+
+Alhough we’ll often only use one or two features here and there. 
+For the most part, the default convention-based attribute route templates generated by Razor Pages will be all we need. 
+
+
+-----------------------------------------------------------------------------------
+Routing to Razor Pages.
+
+Razor Pages uses attribute routing by creating route templates based on conventions. 
+ASP.NET Core creates a route template for every Razor Page in our app during app startup, when we call MapRazorPages in the Configure method of Startup.cs.
+
+Route templates are based on the file path relative to the Razor Pages root directory. 
+Examples:  
+			Pages/Products/View.cshtml   page has a route template of   Products/View
+			Pages/Search/Products/StartSearch.cshtml   page has a route template of    Search/Products/StartSearch
+			Pages/Privacy.cshtml    page has a route template of   Privacy
+
+Steps:
+
+ 1- Requests to the URL /products/view match the route template "Products/View" which in turn corresponds to the View.cshtml Razor Page. 
+ 2- The RoutingMiddleware selects the View.cshtml Razor Page as the endpoint for the request. 
+ 3- The EndpointMiddleware executes the page’s handler once the request reaches it in the middleware pipeline.
+
+IMPORTANT: Routing is not case sensitive, so the request URL does not need to have the same URL casing as the route template to match.
+
+
+-----------------------------------------------------------------------------------
+Customizing Razor Page route templates.
+
+The routing middleware parses a route template by splitting it into a number of segments.
+A segment is typically separated by the / character, but it can be any valid character. 
+Each segment is either:  a literal value  or  a route parameter.
+Example:  
+			product/{category}/{name}
+
+			product is a literal value
+
+			{category} and {name}  are route parameters
+
+Literal values must be matched exactly (ignoring case) by the request URL. Literal segments in ASP.NET Core are not case-sensitive.
+
+Route parameters are sections of a URL that may vary but will still be a match for the template.
+They are defined by giving them a name and placing them in braces, such as {category} or {name}. 
+When used in this way, the parameters are required, so there must be a segment in the request URL that they correspond to, but the value can vary.
+
+The ability to use route parameters gives us great flexibility. 
+For example, the simple route template "{category}/{name}" could be used to match all the product-page URLs in an e-commerce application, such as:
+
+	/bags/rucksack-a—   where category=bags   and   name=rucksack-a
+    /shoes/black-size9  where category=shoes  and   name=black-size9
+
+When a route template defines a route parameter, and the route matches a URL, the value associated with the parameter is captured and stored in a dictionary of values
+associated with the request. These route values typically drive other behavior in the Razor Page, such as model binding.
+
+Route values are the values extracted from a URL based on a given route template. 
+Each route parameter in a template will have an associated route value and they are stored as a string pair in a dictionary. 
+They can be used during model binding.
+
+
+-----------------------------------------------------------------------------------
+Adding a segment to a Razor Page route template.
+
+To customize the Razor Page route template, we update the @page directive at the top of the Razor Page’s .cshtml file.
+
+IMPORTANT: We must include the @page directive at the top of a Razor Page’s .cshtml file. 
+           Without it, ASP.NET Core will not treat the file as a Razor Page, and we will not be able to view the page.
+
+We can add a blanck space + some string to customize the Razor Page route template. 
+Example: @page "Extra" set into the  Pages/Privacy.cshtml  cutomize the route to this page into "Privacy/Extra". Now the page will respond to this URL.
+
+But the most use for this personalization of the route template is to add some route parameters.
+Example: @page "{category}/{name}"    this will add those two parameters to the base razor page.
+
+
+-----------------------------------------------------------------------------------
+Replacing a Razor Page route template completely.
+
+Some time is not enough the possibility of customize the route template adding parameters. Some time we need to replace the current route template.
+To do this, just customize the @page directive, but starting with character "/".
+Examples:  @page "/{category}/{name}" 
+
+           @page "/checkout"      
+		   in this case wherever we place our checkout Razor Page within the Pages folder, 
+		   using this directive ensures it always has the route template "checkout", so it will always match the request URL /checkout.
+
+This way we can think of custom route templates that start with "/" as absolute route templates, 
+while other route templates are relative to their location in the file hierarchy.
+
+Besides of this customize options, route templates have extra features that give we more control over our application’s URLs.
+These features let us have optional URL segments, provide default values when a segment isn’t specified, 
+or place additional constraints on the values that are valid for a given route parameter.
+
+
+-----------------------------------------------------------------------------------
+Using optional and default values.
+
+Example:  product/{category}/{name=all}/{id?}
+
+Here we have the same literal product segment and the required {category} parameter.
+
+The {name=all} parameter is optional with default value. If the request does not send the value for name, it will take the value of all. 
+The parameter always will be available for the controller.
+
+The {id?} defines an optional parameter without default value. If the request does not send the value for id, 
+the paramater will no be set and will no be available for the controller.
+
+We can specify any number of route parameters in our templates, and these values will be available to we when it comes to model binding.
+
+There’s no way to specify a value for the optional {id} parameter without also specifying the {category} and {name} parameters. 
+We can only put an optional parameter (that doesn’t have a default) at the end of a route template. 
+
+
+-----------------------------------------------------------------------------------
+Adding additional constraints to route parameters.
+
+We can add some constraints to out route parameters. We should use a char ":"   Example: {id:int} defines this parameter only accept an integer value.
+
+We can also check more advanced constraints, for example, that an integer value has a particular minimum value, or that a string value has a maximum length. 
+
+Other examples: {age:min(18)}  --> Matches integer values of 18 or greater.
+				{name:length(6)}  --> Matches string values with a length of 6.
+				{qty:int:max(10)?}  --> Optionally matches any integer of 10 or less.
+
+We can combine multiple constraints by separating the constraints with colons ":", like the last example: {qty:int:max(10)?} 
+
+IMPORTANT: Search more possible constraints available at Microsoft: http://mng.bz/xmae or 
+https://docs.microsoft.com/en-us/aspnet/core/fundamentals/routing?view=aspnetcore-6.0#route-constraint-reference
+
+If we have a well-designed set of URLs for our application, we will probably find that we don’t really need to use route constraints. 
+Route constraints really come in useful when we have “overlapping” route templates.
+
+The most of time, Attribute routing (used by Razor Pages and MVC controllers for building APIs) allows us to explicitly control the order the routing middleware looks 
+at our route templates and no reask of confusing and mixed route appear. But, if we find ourself needing to manually control the order, 
+this is a very strong indicator that our URLs are confusing.
+
+If our route templates are well defined, such that each URL only maps to a single template, ASP.NET Core routing will work without any difficulties. 
+Sticking to the builtin conventions as far as possible is the best way to stay on the happy path!
 
 
 
+-----------------------------------------------------------------------------------
+IMPORTANT:
 
+It´s pending to finish Chapter 5 from Part 1. Starting on 5.4.3 Matching arbitrary URLs with the catch-all parameter.
 
-
-
-
-
-
+Pending also Chapter 6: The Binding Model. Retrieving and validating user input.
 
