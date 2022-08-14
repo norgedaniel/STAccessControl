@@ -3,14 +3,26 @@
 @model STCA_App.Pages.TiposAreasAccesoModel
 <h1>Tipos de Areas de Acceso</h1>
 
+<div>
+    <table>
+        <tr>
+            <th>Nombre</th>
+        </tr>
 
-@{
-    foreach (TipoAreaAccesoDTO item in this.Model.ListTiposAreasAcceso)
-    {
-        <h3>@item.Nombre;</h3><br>
-    }
+        @{
+            foreach (TipoAreaAccesoDTO item in Model.ListTiposAreasAcceso)
+            {
+                <tr>
+                    <td>@item.Nombre</td>
+                </tr>
+            }
+        }
 
-}
+    </table>
+</div>
+
+
+
 
 
 
