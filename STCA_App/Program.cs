@@ -17,8 +17,16 @@ builder.Services.AddScoped<TiposAreasAccesoListService>();
 // Add services to the container.
 builder.Services.AddRazorPages();
 
-var app = builder.Build();
+// setting RouteOptions to always get the URL in lowercase and ending with "/"
+builder.Services.Configure<RouteOptions>(options =>
+{
+    options.AppendTrailingSlash = true;
+    options.LowercaseUrls = true;
+    options.LowercaseQueryStrings = true;
+});
 
+var app = builder.Build();
+ 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

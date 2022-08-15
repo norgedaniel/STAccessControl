@@ -624,9 +624,232 @@ Sticking to the builtin conventions as far as possible is the best way to stay o
 
 
 -----------------------------------------------------------------------------------
-IMPORTANT:
+Matching arbitrary URLs with the catch-all parameter.
 
-It´s pending to finish Chapter 5 from Part 1. Starting on 5.4.3 Matching arbitrary URLs with the catch-all parameter.
+The option of catch-all parameter makes possible to get as a string parameter, the remainder of a URL starting at some position, including the "/" character.
 
-Pending also Chapter 6: The Binding Model. Retrieving and validating user input.
+Example:  @page "/{currency}/convert/{**others}"   the string "{**others}" is the catch-all parameter and makes possible to grab the string
+after "convert/" as parameters making possible to process the following requests:
 
+/USD/convert/GBP—Show USD with exchange rate to GBP
+
+/USD/convert/GBP/EUR—Show USD with exchange rates to GBP and EUR
+
+/USD/convert/GBP/EUR/CAD—Show USD with exchange rates for GBP, EUR, and CAD
+
+where the amount of currency to convert are variable and separated by the char "/".
+
+Catch-all parameters can be declared using either one or two asterisks inside the parameter definition, like {*others} or {**others}.
+
+Where possible, to avoid confusion, avoid defining route templates with catch-all parameters that overlap other route templates.
+
+
+
+-----------------------------------------------------------------------------------
+Generating URLs from route parameters.
+
+We can need to do the reverse of the routing process to get the route from the URL request. We could need to build some URL from a routing template.
+
+In our pages model, we have access to the object Url, which has the overloaded method Page() to build the new URL we need. Exmaple:
+
+	var url = Url.Page("Currency/View", new { code = "USD" });
+
+The path to the new Razor page culd be relative as shown into this example, or coudl be absolute starting from the Pages folder: "/Currency/View"
+
+To generate an URL from some MVC controller we need to call the method Action() instead. We should specify the action and controller name
+plus any data needed by the controller. Example:
+
+	var url = Url.Action("View", "Currency", new { code = "USD" });	
+
+"View" is the action and "Currency" is te controller. The new URL is "/Currency/View/USD".
+    
+If the URL we need refers to a Razor Page, use the Page method. If the destination is an MVC action, use the Action method.
+
+
+
+-----------------------------------------------------------------------------------
+Generating URLs with ActionResults.
+ 
+This is usefull when we need to automatically redirect the user to a new URL. In this case we can use an ActionResult to handle the URL generation instead.
+Example:
+
+	public IActionResult OnGetRedirectToPage()
+	{
+		return RedirectToPage("Currency/View", new { id = 5 });	
+	}
+ 
+The RedirectToPage method generates a RedirectToPageResult with the generated URL.
+
+We can use a similar method, RedirectToAction, to automatically redirect to an MVC action instead. 
+Just as with the Page and Action methods, it is the destination that controls whether we need to use RedirectToPage or RedirectToAction. 
+RedirectToAction is only necessary if we’re using MVC controllers to generate HTML instead of Razor Pages.
+
+
+
+-----------------------------------------------------------------------------------
+Generating URLs from other parts of our application.
+
+TIP Where possible, try to keep knowledge of the frontend application design out of our business logic. 
+This pattern is known generally as the Dependency Inversion principle.
+
+The LinkGenerator class lets us generate URL from our view, this is: out of any Page model or MVC controller handler.
+This class is able to update automatically the generated URL if the routes in our application change.
+
+The LinkGenerator class is available in any part of our application, so we can use it inside middleware and any other services. 
+We can use it from Razor Pages and MVC too, if we wish, but the IUrlHelper is typically easier and hides some details of using the LinkGenerator.
+
+LinkGenerator has various methods for generating URLs, such as GetPathByPage, GetPathByAction, and GetUriByPage.
+It´s recommended keep stick to the IUrlHelper where possible.
+
+LinkGenerator can be accessed using dependency injection. See some example on page 148.
+
+
+
+-----------------------------------------------------------------------------------
+Selecting a page handler to invoke.
+
+Razor Pages can have multiple handlers, so if the RoutingMiddleware selects a Razor Page, the EndpointMiddleware still needs to know how to choose which handler to execute.
+
+Razor Pages can contain any number of page handlers, but only one runs in response to a given request.
+
+When the EndpointMiddleware executes a selected Razor Page, it selects a page handler to invoke based on two variables:
+	- The HTTP verb used in the request (for example GET, POST, or DELETE)
+	- The value of the handler route value
+
+From this, the syntax for a Razor page handler is:
+
+		On{verb}[handler][Async]
+
+verb matches with: GET or POST or DELETE.
+
+handler is optional and it can come into the query string, example: /Search?handler=CustomSearch
+or it can placed as a parameter into the @page directive at the begining of the page model file:
+    @page "{handler}"
+
+Async is optional and it´s to spcify if the corresponding async method should be called.
+
+Then we can have for example the following page handlers:
+
+	- OnGet: Invoked for GET requests that don’t specify a handler value.
+	
+	- OnPostAsync: Invoked for POST requests that don’t specify a handler value. 
+	               Returns a Task, so it uses the Async suffix, which is ignored for routing purposes.
+	
+	- OnPostCustomSearch: Invoked for POST requests that specify a handler value of "CustomSearch".
+
+But what happens if we get a request that doesn’t match any of our page handlers ?
+
+If a page handler does not match a request’s HTTP verb and handler value, an implicit page handler is executed that renders the associated Razor view. 
+Implicit page handlers take part in model binding and use page filters but execute no logic.
+
+
+-----------------------------------------------------------------------------------
+Customizing conventions with Razor Pages.
+
+It could be good to persnolize the conventions of ASP.Net Core in order to ensure the URL be always un lowecase, ending with a "/".
+We can do this by set some values for the object RouteOptions into out services object of the Startup class:
+
+	public void ConfigureServices(IServiceCollection services)
+	{
+		services.AddRazorPages();
+
+		services.Configure<RouteOptions>(options =>
+		{
+			options.AppendTrailingSlash = true;
+			options.LowercaseUrls = true;
+			options.LowercaseQueryStrings = true;
+		});
+
+	}
+
+
+
+
+-----------------------------------------------------------------------------------
+The Binding Model. Retrieving and validating user input.
+
+- Using request values to create binding models.
+- Customizing the model-binding process.
+- Validating user input using DataAnnotations attributes.
+
+The Binding Model stands for retreive the parameters from the user request and then they can be used in our Razor Pages.
+
+We’ll see how to take the data posted in the form or in the URL and bind them to C# objects. 
+These objects are passed to our Razor Page handlers as method parameters or are set as properties on our Razor Page PageModel
+
+Another part of the Binding Model is to ensure the data that come from the user are valid and make sense for the Application.
+
+We can think of the binding models as the input to a Razor Page, taking the user’s raw HTTP request and making it available to our code 
+by populating “plain old CLR objects” (POCOs).
+
+
+-----------------------------------------------------------------------------------
+Understanding the models in Razor Pages and MVC.
+
+When the routing middleware receive some user request, it try to route it to the right razor page setting the route parameters got from the URL.
+
+The route parameters parsed from the request are used to build a binding model, setting the binding model parameters throught a custom POCO class.
+
+After binding, the model is validated to check it has acceptable values. The result of the validation is stored in ModelState.
+
+The binding model custom class along with the ModelState are set as properties on the corresponding PageModel.
+The binding model could also be passed as a parameter to the page handler.
+
+IMPORTANT: ASP.NET Core Razor Pages uses several different models, most of which are POCOs, and the application model, which is more of a concept around a collection of services.
+Each of the models in ASP.NET Core is responsible for handling a different aspect of the overall request:
+
+- Binding model: is all the information that’s provided by the user when making a request, as well as additional contextual data. 
+                 This includes things like route parameters parsed from the URL, the query string, and form or JSON data in the request body.
+				 The binding model itself is one or more POCO objects that we define. 
+				 Binding models in Razor Pages are typically defined by creating a public property on the page’s PageModel 
+				 and decorating it with the [BindProperty] attribute. They can also be passed to a page handler as parameters.
+				 The Razor Pages infrastructure inspects the binding model before the page handler executes to check whether the provided values are valid, 
+				 though the page handler will execute even if they’re not.
+
+- Application model: It’s typically a whole group of different services and classes and is more of a concept. 
+                     Anything needed to perform some sort of business action in our application.
+					 It may include the domain model (which represents the thing our app is trying to describe) 
+					 and database models (which represent the data stored in a database), as well as any other, additional services.
+
+- Page model: The PageModel of a Razor Page serves two main functions: it acts as the controller for the application by exposing page handler methods, 
+              and it acts as the view model for a Razor view.
+			  The PageModel base class that we derive our Razor Pages from contains various helper properties and methods. 
+			  One of these, the ModelState property, contains the result of the model validation as a series of key-value pairs. 
+
+These three models make up the bulk of any Razor Pages application, handling the input, business logic, and output of each page handler.
+
+The important point about all these models is that their responsibilities are well defined and distinct. 
+Keeping them separate and avoiding reuse helps to ensure our application stays agile and easy to update.
+
+The obvious exception to this separation is the PageModel, as it is where the binding models and page handlers are defined, 
+and it also holds the data required for rendering the view.
+
+
+
+-----------------------------------------------------------------------------------
+From request to model: Making the request useful.
+
+	- How ASP.NET Core creates binding models from a request.
+	- How to bind simple types, like int and string, as well as complex classes.
+	- How to choose which parts of a request are used in the binding model.
+
+Page handlers are normal C# methods, so the ASP.NET Core framework needs to be able to call them in the usual way.
+
+When page handlers accept parameters as part of their method signature, the framework needs a way to generate those objects. 
+
+The model binding comes in the way of how ASP.NET Core turn the HTTP request string into a .NET objects.
+These objects are passed as method parameters to the page handler being executed 
+or are set as properties of the PageModel that are marked with the [BindProperty] attribute.
+
+The model binder is responsible for looking through the request that comes in and finding values to use. 
+It then creates objects of the appropriate type and assigns these values to our model in a process called binding.
+
+Model binding in Razor Pages and MVC is a one-way population of objects from the request.
+
+
+
+
+
+
+
+ 
