@@ -17,7 +17,7 @@ namespace STCA_ServiceLayer
     public class TipoAreaAccesoDTO
     {
         public int TipoAreaAccesoId { get; set; }
-        public string Nombre { get; set; }
+        public string Nombre { get; set; } = "";
 
     }
 }

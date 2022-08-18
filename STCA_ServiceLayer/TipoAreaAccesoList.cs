@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static STCA_ServiceLayer.TipoAreaAccesoList;
 
 namespace STCA_ServiceLayer
 {
@@ -16,9 +17,16 @@ namespace STCA_ServiceLayer
     {
         public enum TipoAreaAccesoOrderByOptions
         {
-            SimpleOrder, NombreAsc, NombreDesc
-        }
+            [StringValue("Reciente ↑")]
+            DefaultOrder,
 
+            [StringValue("Nombre ↑")]
+            NombreAsc,
+
+            [StringValue("Nombre ↓")]
+            NombreDesc
+
+        }
 
         /// <summary>
         /// Method to map TipoAreaAcceso entity into the TipoAreaAccesoDTO.
@@ -43,6 +51,7 @@ namespace STCA_ServiceLayer
             });
         }
 
+
         /// <summary>
         /// This extension method is to order a list of TipoAreaAccesoDTO as part of a LINQ query.
         /// Sorting in LINQ is done by the methods OrderBy and OrderByDescending. 
@@ -56,11 +65,11 @@ namespace STCA_ServiceLayer
         /// The most efficient sort is on the primary key, so we sort on that key.
         /// </summary>
         public static IQueryable<TipoAreaAccesoDTO> OrderTipoAreaAccesoBy(this IQueryable<TipoAreaAccesoDTO> tiposAreasAcceso,
-                                                                              TipoAreaAccesoOrderByOptions orderByOptions = TipoAreaAccesoOrderByOptions.SimpleOrder)
+                                                                              TipoAreaAccesoOrderByOptions orderByOptions = TipoAreaAccesoOrderByOptions.DefaultOrder)
         {
             switch (orderByOptions)
             {
-                case TipoAreaAccesoOrderByOptions.SimpleOrder:
+                case TipoAreaAccesoOrderByOptions.DefaultOrder:
                     return tiposAreasAcceso.OrderByDescending(a => a.TipoAreaAccesoId);
 
                 case TipoAreaAccesoOrderByOptions.NombreAsc:

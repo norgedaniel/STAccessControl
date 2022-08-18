@@ -3,6 +3,36 @@
 @model STCA_App.Pages.TiposAreasAccesoModel
 <h1>Tipos de Areas de Acceso</h1>
 
+
+<!--
+
+1- establecer filtro sobre Nombre
+2- establecer orden de los registros
+3- establecer paginado. 
+      - retornar desde el service layer, la cantidad de páginas calculadas.
+      - mostrar paginado así: <<  < lista desplegable >  >>
+
+-->
+
+<div>
+
+
+    <form asp-page="TiposAreasAcceso">
+
+        <label asp-for="Input.FiltroNombre"></label>
+        <input asp-for="Input.FiltroNombre" />
+
+        <label asp-for="Input.OrdenDatos"></label>
+        <select asp-for="Input.OrdenDatos" asp-items="Model.OrdenDatosItems"></select>
+
+        <button>Refrescar</button>
+
+
+    </form>
+
+</div>
+
+
 <div>
     <table>
         <tr>

@@ -846,10 +846,435 @@ It then creates objects of the appropriate type and assigns these values to our 
 
 Model binding in Razor Pages and MVC is a one-way population of objects from the request.
 
+For Security reason Model binding will try to fill automatically any parameter received by the page handler methods 
+and the properties decorated with the [BindProperty] attribute when a POST or PUT request is received.
+
+For GET request we need to specify it into the data annotation: [BindProperty(SupportsGet = true)]
+
+It큦 recommended to keep all the model binding in a single, nested class, which can be called InputModel. Example:
+
+	public class IndexModel: PageModel
+	{
+		[BindProperty]
+		public InputModel Input { get; set; }
+
+		public void OnGet()
+		{
+		}
+
+		public class InputModel
+		{
+			public string Category { get; set; }
+			public string Username { get; set; }
+			public ProductModel Model { get; set; }
+		}
+	}
+
+ASP.NET Core automatically populates our binding models for us using properties of the request, such as the request URL, 
+any headers sent in the HTTP request, any data explicitly POSTed in the request body.
+
+By default, ASP.NET Core uses three different binding sources when creating our binding models. 
+It looks through each of these in order and takes the first value it finds (if any) that matches the name of the binding model:
+
+	- Form values뾖ent in the body of an HTTP request when a form is sent to the server using a POST.
+
+	- Route values뾑btained from URL segments or through default values after 	matching a route.
+
+	- Query string values뾒assed at the end of the URL, not used during routing.
+
+The model binder checks each binding source to see if it contains a value that could be set on the model. 
+Alternatively, the model can also choose the specific source the value should come from. 
+Once each property is bound, the model is validated and is set as a property on the PageModel or is passed as a parameter to the page handler.
+
+Setting properties on the PageModel and marking them with [BindProperty] is the approach we뭠l see most often in examples. 
+If we use this approach, we뭠l be able to access the binding model when the view is rendered.
+
+Adding parameters to page handler methods, provides more separation between the different MVC stages, 
+because we won뭪 be able to access the parameters outside of the page handler. On the downside, if we do need to display those values in the Razor view, 
+we뭠l have to manually copy the parameters across to properties that can be accessed in the view.
+
+If I뭢 creating a form, I will favor the [BindProperty] approach, as I typically need access to the request values inside the Razor view.
+
+For simple pages, where the binding model is a product ID for example, I tend to favor the page handler parameter approach for its simplicity, 
+especially if the handler is for a GET request.
+
+The big advantage of using model binding is that we don뭪 have to write the code to parse requests and map the data ourself. 
+
+Model binding is great for reducing repetitive code. 
+Take advantage of it whenever possible and we뭠l rarely find ourself having to access the Request object directly.
+
+The key thing to appreciate is that we didn뭪 have to write any extra code to try to extract the number from the URL when the method executed. 
+All we needed to do was create a method parameter (or public property) with the right name and let model binding do its magic.
+
+Each of the binding sources (forms, route values, query string) store values as name-value pairs. 
+If none of the binding sources contain the required value, the binding model is set to a new, default instance of the type instead.
+
+IMPORTANT:
+
+	- To consider the behavior of our page handler when model binding fails to bind our method parameters. 
+	  If none of the binding sources contain the value, the value passed to the method could be null or could unexpectedly have a default value (for value types).
+        
+	- To consider the order which the binding sources are consulted to produce the binding, specially when we work with more than property binded.
+
+	- The default model binder isn뭪 case sensitive, so a binding value of QTY=50 will happily bind to the qty parameter.
+
+	- All the values in any of the binding sources comes as string. The model binder will convert pretty much any primitive .NET type 
+	  such as int, float, decimal (and string obviously), plus anything that has a TypeConverter.
+	  The model binder will convert complex types by traversing any properties our binding models expose.
+
+	- For a class to be model-bound, it must have a default public constructor. We can only bind properties that are public and settable.
+
+	- As long as each property exposes a type that can be modelbound, the binder can traverse it with ease. 
+	  This way we can bind complex hierarchical models whose properties are themselves complex models.
+
+	- It큦 possible to bind collections and dictionaries too.
+
+	- ASP.NET Core supports uploading files by exposing the IFormFile interface, either as a method parameter to our page handler, or using the [BindProperty] approach.
+	  Example: public void OnPost(IFormFile file);
+	  We can also use an IEnumerable<IFormFile> if we need to accept multiple files: public void OnPost(IEnumerable<IFormFile> file);
+	  The use of IFormFile is well when the user will be upload small files. 
+	  The whole content of the file is buffered in memory and on disk before we receive it. Better yet, avoid file uploads entirely!
+
+
+Example. Let큦 say we have a Razor page to convert some amount of money from one currency into another. 
+We could customize the route template throught the @page directive and program the OnGet page handler to receive the three needed parameters:
+
+	@page "/{currencyIn}/{currencyOut}"
+
+	public class ConvertModel : PageModel
+	{
+		public void OnGet(string currencyIn, string currencyOut, int qty)
+		{
+			/* method implementation */
+		}
+	}
+
+From this example several different request can come:
+
+	URL (route values)						HTTP body data (form values)					Parameter values bound
+	-----------------------------------		----------------------------------------		---------------------------------------------
+	/GBP/USD																				currencyIn=GBP
+																							currencyOut=USD qty=0
+
+	/GBP/USD?currencyIn=CAD					QTY=50											currencyIn=GBP
+																							currencyOut=USD qty=50
+
+	/GBP/USD?qty=100						qty=50											currencyIn=GBP
+																							currencyOut=USD qty=50
+
+	/GBP/USD?qty=100						currencyIn=CAD&currencyOut=EUR&qty=50			currencyIn=CAD
+																							currencyOut=EUR qty=50
+
+It뭩 more common to have our values all come from the request body as form values, maybe with an ID from URL route values.
+
+IMPORTANT: Related to some user uploaded file. Never use posted filenames in our code. 
+		   Users can use them to attack our website and access files they shouldn뭪 be able to.
+
+
+-------------------------------------------------------------------------
+Choosing a binding source.
+
+We have the choice to specify where some of our properties binding come from. We can decorate those attributes with data annotations like this:
+
+	public class PhotosModel: PageModel
+	{
+		public void OnPost(
+			[FromHeader] string userId,
+			[FromBody] List<Photo> photos)
+		{
+			/* method implementation */
+		}
+	}
+
+By default the [FromBody] points to read JSON from the body of the request. 
+But we can use other formats too, depending on which InputFormatters we configure the framework to use.
+
+The binding annotations we can use are:
+
+	- [FromHeader]	Bind to a header value
+	- [FromQuery]	Bind to a query string value
+	- [FromRoute]	Bind to route parameters
+	- [FromForm]	Bind to form data posted in the body of the request
+	- [FromBody]	Bind to the request뭩 body content. Only one attribute can be decorated with this.
+
+Only one parameter may use the [FromBody] attribute. This attribute will consume the incoming request as HTTP request bodies can only be safely read once. 
+
+The [FromBody] and [FromForm] attributes are effectively mutually exclusive.
+
+There are annotations to spacify also the kind of processing for binding:
+
+	- [BindNever]		The model binder will skip this parameter completely.
+	- [BindRequired]	If the parameter was not provided, or was empty, the binder will add a validation error.
+	- [FromServices]	This is used to indicate the parameter should be provided using dependency injection.
+
+
+-----------------------------------------------------------------------------
+Handling user input with model validation.
+
+	- What is validation, and why do we need it?
+	- Using DataAnnotations attributes to describe the data we expect
+	- How to validate our binding models in page handlers
+
+We should always validate data provided by users before we use it in our methods. 
+
+Validation is needed to check for non-malicious errors:
+
+	- Data should be formatted correctly (email fields have a valid email format).
+	- Numbers might need to be in a particular range (we can뭪 buy -1 copies of some book!).
+	- Some values may be required but others are optional (name may be required for a profile but phone number is optional).
+	- Values must conform to our business requirements (we can뭪 convert a currency to itself, it needs to be converted to a different currency).
 
 
 
+-----------------------------------------------------------------------------
+Using DataAnnotations attributes for validation.
+
+Validation attributes, or more precisely DataAnnotations attributes, allow us to specify the rules that our binding model should conform to. 
+They provide metadata about our model by describing the sort of data the binding model should contain.
+
+The great thing about these attributes is that they clearly declare the expected state of the model. 
+By looking at these attributes, we know what the properties will, or should, contain. 
+They also provide hooks for the ASP.NET Core framework to validate that the data set on the model during model binding is valid.
+
+We can find a lot of DataAnnotations to apply to our model into the System.ComponentModel.DataAnnotations namespace. Someones of more used are:
+
+	- [CreditCard]					Validates that a property has a valid credit card format.
+	- [EmailAddress]				Validates that a property has a valid email address format.
+	- [StringLength(max)]			Validates that a string has at most max number of characters.
+	- [MinLength(min)]				Validates that a collection has at least the min number of items.
+	- [Phone]						Validates that a property has a valid phone number format.
+	- [Range(min, max)]				Validates that a property has a value between min and max.
+	- [RegularExpression(regex)]	Validates that a property conforms to the regex regular expression pattern.
+	- [Url]							Validates that a property has a valid URL format.
+	- [Required]					Indicates the property must not be null.
+	- [Compare]						Allows us to confirm that two properties have the same value (for example, Email and ConfirmEmail).
+
+Another way to implement our data validation is the use of the popular FluentValidation library.
+
+IMPORTANT: DataAnnotations are good for input validation of properties in isolation, but not so good for validating business rules. 
+           We뭠l most likely need to perform this validation outside the DataAnnotations framework.
+
+
+-----------------------------------------------------------------------------
+Validating on the server for safety.
+
+Validation of the binding model occurs before the page handler executes, but note that the handler always executes, whether the validation failed or succeeded. 
+It뭩 the responsibility of the page handler to check the result of the validation.
+
+Validation happens automatically, but handling validation failures is the responsibility of the page handler.
+
+The Razor Pages framework stores the output of the validation attempt in a property on the PageModel called ModelState.
+This property is a ModelStateDictionary object which contains a list of all the validation errors that occurred after model binding, 
+as well as some utility properties for working with it.
+
+Example of use of ModelState:
+
+	public IActionResult OnPost()
+	{
+		if (!ModelState.IsValid)
+		{
+			return Page();
+		}
+	
+		/* Save to the database, update user, return success */
+	
+		return RedirectToPage("Success");
+	
+	}
+
+If the ModelState property indicates an error occurred there are messages related to these errors into the ModelState object.
+These error messages can be customized when we set the corresponding DataAnnotation. Example:
+	[Required(ErrorMessage="The Name is required.")]
 
 
 
- 
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+IMPORTANT: POST-REDIRECT-GET pattern.
+
+The POST-REDIRECT-GET design pattern is a web development pattern that prevents users from accidently submitting the same form multiple times. 
+Users typically submit a form using the standard browser POST mechanism, sending data to the server.
+This is the normal way by which we might take a payment, for example.
+
+If a server takes the naive approach and responds with a 200 OK response and some HTML to display, the user will still be on the same URL. 
+If the user then refreshes their browser, they will be making an additional POST to the server, potentially making another payment!
+
+The POST-REDIRECT-GET pattern says that in response to a successful POST, we should return a REDIRECT response to a new URL, which will be followed by the
+browser making a GET to the new URL. If the user refreshes their browser now, they뭠l be refreshing the final GET call to the new URL. 
+No additional POST is made, so no additional payments or side effects should occur.
+
+To implement this design pattern we can use RedirectToPage("Success");  in Razor pages   or  RedirectToPageResult() in MVC projects.
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+For Razor pages is used to let the request handler to decide what to do when validation fails. 
+This allows the user to see the problem and potentially correct it. 
+
+For Web API projects is better the response for a validation error ocurrs automatically, since there are no direct interaction between the user and the application.
+
+Also, by including the IsValid check explicitly in our page handlers, it뭩 easier to control what happens when additional validation checks fail. 
+For example, if the user tries to update a product, the DataAnnotations validation won뭪 know whether a product with the requested ID exists, 
+only whether the ID has the correct format. By moving the validation to the handler method, we can treat data and business rule validation failures in the same way.
+
+
+
+-----------------------------------------------------------------------------
+Validating on the client for user experience.
+
+There are some DataAnnotations attributes to use with out properties model which instruct the Razon engine 
+to generate the appropiate HTML for make some validation on the browser client side. 
+With this approach, the user sees any errors with their form immediately, even before the request is sent to the server.
+
+When we use Razor Pages to generate our HTML, we get much of this validation for free. 
+It automatically configures client-side validation for most of the built-in attributes without requiring additional work.
+
+Unfortunately, if we뭭e used custom ValidationAttributes, these will only run on the server by default; 
+we need to do some additional wiring up of the attribute to make it work on the client side too.
+
+
+
+-----------------------------------------------------------------------------
+Organizing our binding models in Razor Pages.
+
+There is an example in page 184 of the book about a good pattern for model binding for a lage to update a record of some entity of our model.
+
+This Razor Page displays a form for a product with a given ID and allows us to edit the details using a POST request.
+
+- The page model receives a ProductService injected using DI which provides access to the application model.
+
+- Only bind a single property with [BindProperty]. It큦 good having a single property decorated with [BindProperty] for model binding in general. 
+  When more than one value needs to be bound, a separate class is created: InputModel, to hold the values. That single property is decorated with [BindProperty].
+  Decorating a single property like this makes it harder to forget to add the attribute, and it means all of our Razor Pages use the same pattern.
+
+- Define our binding model as a nested class inside the Razor Page. It큦 usually and always named: InputModel.
+  The binding model is normally highly specific to that single page, so doing this keeps everything we뭨e working on together.
+  Again, this adds consistency to our Razor Pages
+
+- The id parameter is modelbound from the route template for both OnGet and OnPost handlers.
+
+- We do not use [BindProperties] that can be applied to the Razor Page PageModel directly, causing all properties in our model to be model-bound, 
+  which can leave us open to over-posting attacks if we뭨e not careful. 
+  It큦 better avoid the use of [BindProperties] and stick to binding a single property with [BindProperty] instead.
+
+- We accept route parameters in the page handler. 
+  For simple route parameters, such as the id passed into the OnGet and OnPost handlers we add parameters to the page handler method itself.
+  This avoids the clunky SupportsGet=true syntax for GET requests.
+
+- We always validate before using data.
+
+
+public class EditProductModel : PageModel
+{
+	
+	// service to be injected by DI for access to our applicaiotn model
+	private readonly ProductService _productService;
+	
+	// constructor used by DI.
+	public EditProductModel(ProductService productService)
+	{
+		_productService = productService;
+	}
+
+
+	// A single property is marked with BindProperty
+	[BindProperty]
+	public InputModel Input { get; set; }
+
+
+	// id parameter is modelbound from the route template
+	public IActionResult OnGet(int id)
+	{
+		// Load the product details from the application model.
+		var product = _productService.GetProduct(id);
+
+		// Build an instance of the InputModel for editing in the form from the existing product뭩 details.
+		// this object is the model used by view to render the HTML for user.
+		Input = new InputModel
+		{
+			Name = product.ProductName,
+			Price = product.SellPrice,
+		};
+	
+		return Page();
+
+	}
+
+
+	// id parameter is modelbound from the route template
+	public IActionResult OnPost(int id)
+	{
+		// If the request was not valid, redisplay the form without saving.
+		if (!ModelState.IsValid)
+		{
+			return Page();
+		}
+
+		// Update the product in the application model using the ProductService.
+		_productService.UpdateProduct(id, Input.Name, Input.Price);
+
+		// Redirect to a new page using the POST-REDIRECTGET pattern.
+		return RedirectToPage("Index");
+
+	}
+
+	// Define the InputModel as a nested class in the Razor Page. This is the class for [BindProperty] annotation
+	public class InputModel
+	{
+
+		[Required]
+		public string Name { get; set; }
+
+		[Range(0, int.MaxValue)]
+		public decimal Price { get; set; }
+
+	}
+
+}
+
+As summary:
+
+- ASP.NET Core framework uses model binding to simplify the process of extracting values from a request and turning them into normal .NET objects we can quickly work with. 
+
+- The most important aspect of this chapter is the focus on validation and the use of DataAnnotations can make it easy to add validation to our models.
+
+- Razor Pages uses three distinct models, each responsible for a different aspect of a request. The binding model encapsulates data sent as part of a request. 
+  The application model represents the state of the application. 
+  The PageModel is the backing class for the Razor Page, and it exposes the data used by the Razor view to generate a response.
+
+- Model binding extracts values from a request and uses them to create .NET objects the page handler can use when they execute.
+
+- Any properties on the PageModel marked with the [BindProperty] attribute, and method parameters of the page handlers, will take part in model binding.
+
+- Properties decorated with [BindProperty] are not bound for GET requests. To bind GET requests, we must use [BindProperty(SupportsGet = true)] instead.
+
+- By default, there are three binding sources: POSTed form values, route values, and the query string. 
+  The binder will interrogate these in order when trying to bind our binding models.
+
+- When binding values to models, the names of the parameters and properties aren뭪 case sensitive.
+
+- We can bind to simple types or to the properties of complex types.
+
+- To bind complex types, they must have a default constructor and public, settable properties.
+
+- Simple types must be convertible to strings to be bound automatically; for example, numbers, dates, and Boolean values.
+
+- Collections and dictionaries can be bound using the [index]=value and [key]=value syntax, respectively.
+
+- We can customize the binding source for a binding model using [From*] attributes applied to the method, such as [FromHeader] and [FromBody]. 
+  These can be used to bind to nondefault binding sources, such as headers or JSON body content.
+
+- In contrast to the previous version of ASP.NET, the [FromBody] attribute is required when binding JSON properties (previously it was not required).
+
+- Validation is necessary to check for security threats. 
+  Check that data is formatted correctly and confirm that it conforms to expected values and that it meets our business rules.
+
+- ASP.NET Core provides DataAnnotations attributes to allow us to declaratively define the expected values.
+
+- Validation occurs automatically after model binding, but we must manually check the result of the validation and act accordingly in our page handler 
+  by interrogating the ModelState property.
+
+- Client-side validation provides a better user experience than server-side validation alone, but we should always use server-side validation.
+
+- Client-side validation uses JavaScript and attributes applied to our HTML elements to validate form values.
+

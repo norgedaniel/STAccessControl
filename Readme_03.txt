@@ -43,4 +43,27 @@ Tag Helpers are used to:
 	- Choose the correct input type to display (for example, a number input for the Quantity property).
 	- Display any validation errors.
 
+
+Tag helpers in forms:
+
+The first tag helper is to determine the URL the form will be posted to.
+<form asp-page="Checkout">   in this case we are telling the Checkout page will process the form.
+
+The Label Tag Helper uses DataAnnotations on a property to determine the caption to display.
+<label asp-for="Input.FirstName"></label>
+
+The Input Tag Helper uses DataAnnotations to determine the type of input to generate.
+<input asp-for="Input.Email" />
+
+The Validation Tag Helper displays error messages associated with the given property.
+<span asp-validation-for="Input.PhoneNumber"></span>
+
+
+
+
+
+
+
+
 OJO: ME QUEDÉ EN LA PÁGINA 228 Creating forms using Tag Helpers. 
+

@@ -8,7 +8,7 @@ namespace STCA_DataLayer
 {
     public class AppDbContext : DbContext
     {
-        //public AppDbContext() { }
+        public AppDbContext() { }
 
         public AppDbContext(DbContextOptions<AppDbContext> dbContextOptions) : base(dbContextOptions)
         { }
