@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace STCA_ServiceLayer
+namespace STCA_Tool
 {
     /// <summary>
     /// This attribute is used to represent a string value for a value in an enum.

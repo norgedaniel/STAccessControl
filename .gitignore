@@ -11,3 +11,5 @@
 /STCA_App/bin/Debug/net6.0
 /ConsoleApp/bin/Debug/net6.0
 /.vs
+/STCA_Tool/obj
+/STCA_Tool/bin/Debug/net6.0

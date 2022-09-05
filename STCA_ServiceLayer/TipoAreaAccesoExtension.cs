@@ -1,19 +1,20 @@
 ﻿using STCA_DataLayer;
+using STCA_Tool;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static STCA_ServiceLayer.TipoAreaAccesoList;
+using static STCA_ServiceLayer.TipoAreaAccesoExtension;
 
 namespace STCA_ServiceLayer
 {
     /// <summary>
-    /// Class for easy query of TipoAreaAcceso entity offering facilities for ordering and filtering the data.
+    /// Class for easy query of TipoAreaAcceso entity offering facilities for sort and filter data.
     /// To do this the methods development for that goal, must be able to be part of a LINQ query.
     /// The methods should return a IQueryable<TipoAreaAccesoDTO> receiving a parameter of type (this IQueryable<TipoAreaAcceso>)
     /// </summary>
-    public static class TipoAreaAccesoList
+    public static class TipoAreaAccesoExtension
     {
         public enum TipoAreaAccesoOrderByOptions
         {
@@ -87,14 +88,13 @@ namespace STCA_ServiceLayer
         /// This extension method is to filter a list of TipoAreaAccesoDTO as part of a LINQ query.
         /// In this case we are implementing a filter over the Nombre field, type of string containing a substring sent as paramater.
         /// </summary>
-        public static IQueryable<TipoAreaAccesoDTO> FilterTipoAreaAccesoBy(this IQueryable<TipoAreaAccesoDTO> tiposAreasAcceso,
-                                                                               string filterValue)
+        public static IQueryable<TipoAreaAccesoDTO> FilterTipoAreaAccesoBy(this IQueryable<TipoAreaAccesoDTO> tiposAreasAcceso, string? nombreFilterValue)
         {
-            if (string.IsNullOrEmpty(filterValue))
+            if (string.IsNullOrEmpty(nombreFilterValue))
                 // if no filterValue; return the original list
                 return tiposAreasAcceso;
 
-            return tiposAreasAcceso.Where(a => a.Nombre.Contains(filterValue));
+            return tiposAreasAcceso.Where(a => a.Nombre.Contains(nombreFilterValue));
 
         }
 

@@ -22,9 +22,12 @@ namespace ConsoleApp
 
                 TiposAreasAccesoListService service = new TiposAreasAccesoListService(db);
 
-                var lista = service.SortFilterPage(TipoAreaAccesoList.TipoAreaAccesoOrderByOptions.NombreAsc, "ipo", 12, 8);
+                TiposAreasAccesoList tiposAreasAccesoList = service.SortFilterPage(TipoAreaAccesoExtension.TipoAreaAccesoOrderByOptions.NombreAsc, 12, 8, "ipo");
 
-                foreach (var item in lista)
+                if (tiposAreasAccesoList.PagesCount == 0)
+                    return;
+
+                foreach (var item in tiposAreasAccesoList.TipoAreaAccesoDTOList)
                 {
                     Console.WriteLine($"Id TipoAreaAcceso: {item.TipoAreaAccesoId}, Nombre: {item.Nombre}");
                 }

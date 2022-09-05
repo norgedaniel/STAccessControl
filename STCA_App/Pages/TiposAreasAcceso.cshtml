@@ -1,4 +1,4 @@
-﻿@page
+﻿@page "{pagenumber:int=1}"
 @using STCA_ServiceLayer
 @model STCA_App.Pages.TiposAreasAccesoModel
 <h1>Tipos de Areas de Acceso</h1>
@@ -6,50 +6,87 @@
 
 <!--
 
-1- establecer filtro sobre Nombre
-2- establecer orden de los registros
-3- establecer paginado. 
-      - retornar desde el service layer, la cantidad de páginas calculadas.
-      - mostrar paginado así: <<  < lista desplegable >  >>
+1- establecer filtro sobre Nombre. DONE
+
+2- establecer orden de los registros. DONE
+
+3- establecer paginado.
+    - seleccionar la longitud de la página. DONE
+    - retornar desde el service layer, la cantidad de páginas calculadas. DONE
+    - mostrar paginado así: <<  < página 1 de 2 >  >>. DONE
+
+4- adicionar un registro. DONE
+
+5- editar un registro. DONE
+
+6- eliminar un registro. 50 %
+     - pedir mediante javascript emergente que confirme eliminar el registro.
+
+7- poner el caption de los labels como DataAnnotations. DONE
 
 -->
 
 <div>
+    <form asp-page="TiposAreaAcceso" asp-route-pagina="1">
+        <div>
+            <label asp-for="Input.OrdenDatos"></label>
+            <select asp-for="Input.OrdenDatos" asp-items="Model.OrdenDatosItems"></select>
 
+            <label asp-for="Input.FiltroNombre"></label>
+            <input asp-for="Input.FiltroNombre" />
 
-    <form asp-page="TiposAreasAcceso">
+            <label asp-for="Input.LongitudPagina"></label>
+            <select asp-for="Input.LongitudPagina" asp-items="Model.PageLenghtItems"></select>
 
-        <label asp-for="Input.FiltroNombre"></label>
-        <input asp-for="Input.FiltroNombre" />
+            <button>Refrescar</button>
+        </div>
 
-        <label asp-for="Input.OrdenDatos"></label>
-        <select asp-for="Input.OrdenDatos" asp-items="Model.OrdenDatosItems"></select>
+        <div>
+            <button asp-page="TiposAreasAccesoRegistrar" formmethod="get">Adicionar</button>
+        </div>
 
-        <button>Refrescar</button>
-
-
-    </form>
-
-</div>
-
-
-<div>
-    <table>
-        <tr>
-            <th>Nombre</th>
-        </tr>
-
-        @{
-            foreach (TipoAreaAccesoDTO item in Model.ListTiposAreasAcceso)
-            {
+        <div>
+            <table>
                 <tr>
-                    <td>@item.Nombre</td>
+                    <th>Nombre</th>
                 </tr>
-            }
-        }
 
-    </table>
+                @{
+                    foreach (TipoAreaAccesoDTO item in Model.TiposAreasAccesoList.TipoAreaAccesoDTOList)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-page="TiposAreasAccesoRegistrar" asp-route-id="@item.TipoAreaAccesoId">@item.Nombre</a>
+                            </td>
+                            <td>
+                                <button asp-page-handler="Delete" asp-route-id="@item.TipoAreaAccesoId">Eliminar</button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </table>
+        </div>
+
+        <div>
+            <button asp-route-pagenumber="1">Primera página</button>&nbsp;&nbsp;
+            <button asp-route-pagenumber="@(Model.pagenumber-1)">Anterior</button>&nbsp;&nbsp;
+            Página: @Model.pagenumber de @Model.TiposAreasAccesoList.PagesCount &nbsp;&nbsp;
+            <button asp-route-pagenumber="@(Model.pagenumber+1)">Siguiente</button>&nbsp;&nbsp;
+            <button asp-route-pagenumber="@Model.TiposAreasAccesoList.PagesCount">Ultima página</button>
+        </div>
+
+        @*        <div>
+        <button asp-page-handler="Pagina" asp-route-pagenumber="1">Primera página</button>&nbsp;&nbsp;
+        <button asp-page-handler="Pagina" asp-route-pagenumber="@(Model.Input.Pagina-1)">Anterior</button>&nbsp;&nbsp;
+        Página: @Model.Input.Pagina de @Model.Input.CantidadPaginas &nbsp;&nbsp;
+        <button asp-page-handler="Pagina" asp-route-pagenumber="@(Model.Input.Pagina+1)">Siguiente</button>&nbsp;&nbsp;
+        <button asp-page-handler="Pagina" asp-route-pagenumber="@Model.Input.CantidadPaginas">Ultima página</button>
+        </div>
+        *@
+    </form>
 </div>
+
+
 
 
 

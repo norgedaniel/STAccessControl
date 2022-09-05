@@ -379,14 +379,16 @@ There are different types to return as ActionResults. The most used are:
 ----------------------------------------------------------------------------
 Routing.
 
-Routing in ASP.NET Core is the process of mapping an incoming HTTP request to a specific handler. 
+Routing in ASP.NET Core is the process of mapping an incoming HTTP request to a specific handler setting the data needed by the handler.
 In Razor Pages, the handler is a page handler method in a Razor Page. In MVC, the handler is an action method in a controller.
 
-With Routing instead of take the query string to build a dynamic model binding, it decouples the URL into the Razor page to be call and the parameters to be filled:
+With Routing instead of take the query string to build a dynamic model binding, 
+the URL is decoupled into the razor page + handler method along with the parameters or data needed to process the request. 
+The handler method is determined by the sent method used by the request: GET/POST:
 
-Example of using classic query string approach: products?name=simple-widget    -->  select products.cshtml  and parameter: name="simple-widget"
+	Example of using classic query string approach: products?name=simple-widget    -->  select products.cshtml  and parameter: name="simple-widget"
 
-Example of using Routing decoupling:  products/simple-widget  -->   select products.cshtml  and parameter:  {name}="simple-widget" 
+	Example of using Routing decoupling:  products/simple-widget  -->   select products.cshtml  and parameter:  {name}="simple-widget" 
 
 
 There are two types or routing available in ASP.NET Core: "convention-based routing" and "attribute routing".
@@ -795,10 +797,11 @@ After binding, the model is validated to check it has acceptable values. The res
 The binding model custom class along with the ModelState are set as properties on the corresponding PageModel.
 The binding model could also be passed as a parameter to the page handler.
 
-IMPORTANT: ASP.NET Core Razor Pages uses several different models, most of which are POCOs, and the application model, which is more of a concept around a collection of services.
+IMPORTANT: ASP.NET Core Razor Pages uses several different models, most of which are POCOs, and the application model, 
+which is more of a concept around a collection of services.
 Each of the models in ASP.NET Core is responsible for handling a different aspect of the overall request:
 
-- Binding model: is all the information that’s provided by the user when making a request, as well as additional contextual data. 
+- Binding model: It´s all the information that’s provided by the user when making a request, as well as additional contextual data. 
                  This includes things like route parameters parsed from the URL, the query string, and form or JSON data in the request body.
 				 The binding model itself is one or more POCO objects that we define. 
 				 Binding models in Razor Pages are typically defined by creating a public property on the page’s PageModel 
@@ -878,7 +881,7 @@ It looks through each of these in order and takes the first value it finds (if a
 
 	- Form values—Sent in the body of an HTTP request when a form is sent to the server using a POST.
 
-	- Route values—Obtained from URL segments or through default values after 	matching a route.
+	- Route values—Obtained from URL segments or through default values after matching a route.
 
 	- Query string values—Passed at the end of the URL, not used during routing.
 
