@@ -13,3 +13,5 @@
 /.vs
 /STCA_Tool/obj
 /STCA_Tool/bin/Debug/net6.0
+/STCA_WebAPI/obj
+/STCA_WebAPI/bin/Debug/net6.0

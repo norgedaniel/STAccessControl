@@ -14,12 +14,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Readme_01.txt = Readme_01.txt
 		Readme_02.txt = Readme_02.txt
 		Readme_03.txt = Readme_03.txt
+		Readme_04.txt = Readme_04.txt
 		TODO.txt = TODO.txt
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "STCA_App", "STCA_App\STCA_App.csproj", "{D11E487B-A630-4EA4-BA54-5EE39B11A449}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "STCA_Tool", "STCA_Tool\STCA_Tool.csproj", "{1C981AB3-45C3-48A5-A99A-CED2AA69A868}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STCA_WebAPI", "STCA_WebAPI\STCA_WebAPI.csproj", "{06972FA5-7859-4C76-AB0F-DE572F551613}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +50,10 @@ Global
 		{1C981AB3-45C3-48A5-A99A-CED2AA69A868}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C981AB3-45C3-48A5-A99A-CED2AA69A868}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C981AB3-45C3-48A5-A99A-CED2AA69A868}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06972FA5-7859-4C76-AB0F-DE572F551613}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06972FA5-7859-4C76-AB0F-DE572F551613}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06972FA5-7859-4C76-AB0F-DE572F551613}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06972FA5-7859-4C76-AB0F-DE572F551613}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
