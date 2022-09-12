@@ -10,7 +10,7 @@ namespace STCA_WebAPI.Controllers
     {
         // class service to get access to the TiposAreasAcceso entities.
         private readonly TiposAreasAccesoListService _service;
-
+         
         public TiposAreasAccesoController(TiposAreasAccesoListService service)
         {
             _service = service;
@@ -19,8 +19,7 @@ namespace STCA_WebAPI.Controllers
 
         [HttpGet(Name = "GetTiposAreasAccesoList")]
         public ActionResult<TiposAreasAccesoList> GetTiposAreasAccesoList(
-                TipoAreaAccesoExtension.TipoAreaAccesoOrderByOptions ordenDatos
-                        = TipoAreaAccesoExtension.TipoAreaAccesoOrderByOptions.DefaultOrder,
+                TipoAreaAccesoExtension.TipoAreaAccesoOrderByOptions ordenDatos = TipoAreaAccesoExtension.TipoAreaAccesoOrderByOptions.DefaultOrder,
                 int longitudPagina = 10, int pagenumber = 1, string? filtroNombre = "")
         {
             TiposAreasAccesoList tiposAreasAccesoList = _service.SortFilterPage(ordenDatos, longitudPagina, pagenumber, filtroNombre);

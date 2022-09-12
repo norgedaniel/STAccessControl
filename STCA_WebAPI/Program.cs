@@ -10,7 +10,7 @@ var connection = @"Data Source = (localdb)\mssqllocaldb; Initial Catalog = STCA_
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connection));
 
 builder.Services.AddScoped<TiposAreasAccesoListService>();
-
+ 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
